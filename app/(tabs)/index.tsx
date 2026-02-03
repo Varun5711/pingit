@@ -1,98 +1,188 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+/**
+ * PingIt - Main Home Screen
+ */
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { CreateReminderForm, ReminderCard } from "@/components/reminder";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useReminders } from "@/hooks/useReminders";
+import { ReminderCreate } from "@/lib/types";
+import * as Haptics from "expo-haptics";
+import { StatusBar } from "expo-status-bar";
+import { useCallback, useState } from "react";
+import {
+  FlatList,
+  Modal,
+  Pressable,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const {
+    reminders,
+    activeReminders,
+    acknowledgedReminders,
+    isLoading,
+    createReminder,
+    removeReminder,
+    refresh,
+  } = useReminders();
+
+  // Set up notifications and handle Yes/No responses
+  useNotifications(refresh);
+
+  const handleCreateReminder = async (data: ReminderCreate) => {
+    await createReminder(data);
+    setModalVisible(false);
+  };
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }, [refresh]);
+
+  const openCreateModal = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setModalVisible(true);
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="light" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>PingIt</Text>
+          <Text style={styles.subtitle}>
+            {reminders.length === 0
+              ? "No reminders yet"
+              : `${activeReminders.length} active, ${acknowledgedReminders.length} done today`}
+          </Text>
+        </View>
+        <Pressable onPress={openCreateModal} style={styles.addButton}>
+          <Text style={styles.addButtonText}>+</Text>
+        </Pressable>
+      </View>
+
+      {/* Reminder List */}
+      {isLoading ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Loading...</Text>
+        </View>
+      ) : reminders.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>🔔</Text>
+          <Text style={styles.emptyTitle}>No reminders yet</Text>
+          <Text style={styles.emptyText}>
+            {`Tap the + button to create your first reminder.\nIt'll ping you until you say "Yes"!`}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={reminders}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <ReminderCard reminder={item} onDelete={removeReminder} />
+          )}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#0A84FF"
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      {/* Create Reminder Modal */}
+      <Modal
+        visible={isModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <CreateReminderForm
+          onSubmit={handleCreateReminder}
+          onCancel={() => setModalVisible(false)}
+        />
+      </Modal>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#000000",
   },
-  stepContainer: {
-    gap: 8,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  title: {
+    color: "#FFFFFF",
+    fontSize: 34,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    color: "#8E8E93",
+    fontSize: 13,
+    marginTop: 4,
+  },
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#0A84FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 28,
+    fontWeight: "300",
+    marginTop: -2,
+  },
+  list: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 40,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: "700",
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  emptyText: {
+    color: "#8E8E93",
+    fontSize: 15,
+    textAlign: "center",
+    lineHeight: 22,
   },
 });
