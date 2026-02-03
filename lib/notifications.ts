@@ -5,14 +5,20 @@ import { Reminder } from "./types";
 export const NOTIFICATION_CATEGORY = "PINGIT_REMINDER";
 
 export async function setupNotifications(): Promise<boolean> {
-  const { status } = await Notifications.requestPermissionsAsync();
-  if (status !== "granted") {
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+
+  if (existingStatus !== "granted") {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+
+  if (finalStatus !== "granted") {
     return false;
   }
 
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
       shouldShowBanner: true,
@@ -70,8 +76,10 @@ export async function scheduleNotificationsForReminder(
   const intervalMs = reminder.intervalMinutes * 60 * 1000;
   const endOfDay = getEndOfToday().getTime();
 
-  // Start from now (or next interval slot)
+  // Start next notification from interval time
   let nextTime = Date.now() + intervalMs;
+
+  console.log(`📅 Scheduling notifications for: "${reminder.text}"`);
 
   while (nextTime <= endOfDay) {
     try {
@@ -96,6 +104,7 @@ export async function scheduleNotificationsForReminder(
     nextTime += intervalMs;
   }
 
+  console.log(`📬 Total notifications scheduled: ${notificationIds.length}`);
   return notificationIds;
 }
 
@@ -108,7 +117,7 @@ export async function cancelNotificationsForReminder(
   for (const id of notificationIds) {
     try {
       await Notifications.cancelScheduledNotificationAsync(id);
-    } catch (error) {
+    } catch {
       // Notification may have already fired
     }
   }

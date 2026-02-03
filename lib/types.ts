@@ -10,6 +10,7 @@ export interface Reminder {
 export type ReminderCreate = Pick<Reminder, "text" | "intervalMinutes">;
 
 export const INTERVAL_OPTIONS = [
+  { label: "1 min (test)", value: 1 },
   { label: "30 minutes", value: 30 },
   { label: "1 hour", value: 60 },
   { label: "2 hours", value: 120 },
