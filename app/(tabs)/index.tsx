@@ -1,7 +1,3 @@
-/**
- * PingIt - Main Home Screen
- */
-
 import { CreateReminderForm, ReminderCard } from "@/components/reminder";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useReminders } from "@/hooks/useReminders";
@@ -34,7 +30,6 @@ export default function HomeScreen() {
     refresh,
   } = useReminders();
 
-  // Set up notifications and handle Yes/No responses
   useNotifications(refresh);
 
   const handleCreateReminder = async (data: ReminderCreate) => {
@@ -57,7 +52,6 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>PingIt</Text>
@@ -78,7 +72,6 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* Reminder List */}
       {isLoading ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>Loading...</Text>
@@ -116,7 +109,6 @@ export default function HomeScreen() {
         />
       )}
 
-      {/* Create Reminder Modal */}
       <Modal
         visible={isModalVisible}
         animationType="slide"
@@ -184,7 +176,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 40,
-    paddingBottom: 100, // Move visual center up
+    paddingBottom: 100,
   },
   emptyIconContainer: {
     width: 80,

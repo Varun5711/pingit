@@ -1,7 +1,3 @@
-/**
- * Create Reminder Form Modal
- */
-
 import { INTERVAL_OPTIONS, ReminderCreate } from "@/lib/types";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
@@ -26,7 +22,7 @@ export function CreateReminderForm({
   onCancel,
 }: CreateReminderFormProps) {
   const [text, setText] = useState("");
-  const [intervalMinutes, setIntervalMinutes] = useState(30); // Default 30 mins
+  const [intervalMinutes, setIntervalMinutes] = useState(30);
 
   const handleSubmit = () => {
     if (!text.trim()) return;

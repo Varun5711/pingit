@@ -50,25 +50,16 @@ export function getTodayString(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-/**
- * Check if a reminder was acknowledged today
- */
 export function isAcknowledgedToday(reminder: Reminder): boolean {
   return reminder.lastAcknowledgedDate === getTodayString();
 }
 
-/**
- * Get end of today (11:59:59 PM)
- */
 function getEndOfToday(): Date {
   const end = new Date();
   end.setHours(23, 59, 59, 999);
   return end;
 }
 
-/**
- * Schedule all notifications for a reminder until midnight
- */
 export async function scheduleNotificationsForReminder(
   reminder: Reminder,
 ): Promise<string[]> {
@@ -76,7 +67,6 @@ export async function scheduleNotificationsForReminder(
   const intervalMs = reminder.intervalMinutes * 60 * 1000;
   const endOfDay = getEndOfToday().getTime();
 
-  // Start next notification from interval time
   let nextTime = Date.now() + intervalMs;
 
   console.log(`📅 Scheduling notifications for: "${reminder.text}"`);
@@ -108,24 +98,16 @@ export async function scheduleNotificationsForReminder(
   return notificationIds;
 }
 
-/**
- * Cancel all scheduled notifications for a reminder
- */
 export async function cancelNotificationsForReminder(
   notificationIds: string[],
 ): Promise<void> {
   for (const id of notificationIds) {
     try {
       await Notifications.cancelScheduledNotificationAsync(id);
-    } catch {
-      // Notification may have already fired
-    }
+    } catch {}
   }
 }
 
-/**
- * Handle notification action (Yes/No button tap)
- */
 export async function handleNotificationResponse(
   response: Notifications.NotificationResponse,
 ): Promise<void> {
@@ -136,7 +118,6 @@ export async function handleNotificationResponse(
   if (!reminderId) return;
 
   if (actionIdentifier === "YES") {
-    // Acknowledge for today - cancel remaining notifications
     const reminder = await getReminder(reminderId);
     if (reminder) {
       await cancelNotificationsForReminder(reminder.notificationIds);
@@ -145,12 +126,8 @@ export async function handleNotificationResponse(
       await updateReminder(reminder);
     }
   }
-  // "NO" action - do nothing, notifications continue
 }
 
-/**
- * Reconcile reminders on app open - reschedule any that need it
- */
 export async function reconcileReminders(
   reminders: Reminder[],
 ): Promise<Reminder[]> {
@@ -158,13 +135,11 @@ export async function reconcileReminders(
   const updatedReminders: Reminder[] = [];
 
   for (const reminder of reminders) {
-    // Skip if already acknowledged today
     if (reminder.lastAcknowledgedDate === today) {
       updatedReminders.push(reminder);
       continue;
     }
 
-    // If acknowledged on a previous day, clear the flag
     if (
       reminder.lastAcknowledgedDate &&
       reminder.lastAcknowledgedDate !== today
@@ -172,7 +147,6 @@ export async function reconcileReminders(
       reminder.lastAcknowledgedDate = undefined;
     }
 
-    // Check if needs scheduling
     if (reminder.notificationIds.length === 0) {
       const newIds = await scheduleNotificationsForReminder(reminder);
       reminder.notificationIds = newIds;

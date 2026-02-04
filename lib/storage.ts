@@ -1,7 +1,3 @@
-/**
- * AsyncStorage wrapper for reminder persistence
- */
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Reminder, STORAGE_KEYS } from "./types";
 

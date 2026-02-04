@@ -11,7 +11,6 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  // Initialize notifications on app start
   useEffect(() => {
     setupNotifications();
   }, []);

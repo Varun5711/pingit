@@ -125,8 +125,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderCurve: "continuous", // iOS 13+ sleek corners
-    // Subtle border for definition
     borderWidth: 1,
     borderColor: "#2C2C2E",
     shadowColor: "#000",
@@ -225,7 +223,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "rgba(60, 60, 67, 0.3)", // Transparent dark gray
+    backgroundColor: "rgba(60, 60, 67, 0.3)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -237,6 +235,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "400",
     lineHeight: 20,
-    marginTop: -2, // Visual optical adjustment
+    marginTop: -2,
   },
 });
