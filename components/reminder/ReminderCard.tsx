@@ -146,7 +146,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     marginBottom: 8,
   },
   text: {
@@ -154,7 +153,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
     lineHeight: 22,
-    flex: 1,
+    flexShrink: 1,
     marginRight: 8,
   },
   textAcknowledged: {
